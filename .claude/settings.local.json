@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pandoc penalty_clash_spec.docx -o penalty_clash_spec.md)",
+      "Bash(python \"C:\\\\Users\\\\Lenovo\\\\AppData\\\\Roaming\\\\Claude\\\\local-agent-mode-sessions\\\\skills-plugin\\\\7dec0b64-7af6-4c38-b70d-11d04e16429d\\\\860caadb-410b-4637-8d8e-f7dcfc11dc4c\\\\skills\\\\docx\\\\scripts\\\\office\\\\unpack.py\" \"C:\\\\Users\\\\Lenovo\\\\OneDrive\\\\Desktop\\\\Kickshot\\\\penalty_clash_spec.docx\" \"C:\\\\Users\\\\Lenovo\\\\OneDrive\\\\Desktop\\\\Kickshot\\\\spec_unpacked\")",
+      "PowerShell(Add-Type -AssemblyName System.IO.Compression.FileSystem; $zip = [System.IO.Compression.ZipFile]::OpenRead\\(\"C:\\\\Users\\\\Lenovo\\\\OneDrive\\\\Desktop\\\\Kickshot\\\\penalty_clash_spec.docx\"\\); $entry = $zip.Entries | Where-Object { $_.FullName -eq \"word/document.xml\" }; $reader = New-Object System.IO.StreamReader\\($entry.Open\\(\\)\\); $reader.ReadToEnd\\(\\); $reader.Close\\(\\); $zip.Dispose\\(\\))",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npm run *)",
+      "Bash(python \"C:\\\\Users\\\\Lenovo\\\\AppData\\\\Roaming\\\\Claude\\\\local-agent-mode-sessions\\\\skills-plugin\\\\7dec0b64-7af6-4c38-b70d-11d04e16429d\\\\860caadb-410b-4637-8d8e-f7dcfc11dc4c\\\\skills\\\\docx\\\\scripts\\\\office\\\\unpack.py\" penalty_clash_spec_v2.docx /tmp/spec_unpacked/)",
+      "Bash(extract-text penalty_clash_spec_v2.docx)",
+      "Read(//tmp/**)",
+      "Bash(pandoc penalty_clash_spec_v2.docx -o /tmp/spec.md)",
+      "Bash(/c/Users/Lenovo/AppData/Local/Programs/Python/Python36/python -c ' *)",
+      "Bash(cp /tmp/spec_unpack/sx/word/spec_text.txt \"C:\\\\Users\\\\Lenovo\\\\OneDrive\\\\Desktop\\\\Kickshot\\\\spec_text.txt\")",
+      "Bash(ls .claude)",
+      "Bash(cat .claude/launch.json)",
+      "Bash(node test_validation.mjs)",
+      "Bash(node -e ' *)",
+      "Bash(rm test_validation.mjs)",
+      "Bash(npx vite *)"
+    ]
+  }
+}
