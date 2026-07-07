@@ -19,9 +19,9 @@ const ARM_HW  = 115, ARM_YMIN = -50, ARM_YMAX = -4
 
 // Goal posts / crossbar in SVG world coords (matching Pitch.jsx geometry)
 export const POSTS = {
-  left:  { x1: 38, y1: 192, x2: 48,  y2: 308 },
-  right: { x1: 342, y1: 192, x2: 352, y2: 308 },
-  top:   { x1: 38, y1: 192, x2: 352, y2: 202 },
+  left:  { x1: 38, y1: 202, x2: 48,  y2: 308 },
+  right: { x1: 342, y1: 202, x2: 352, y2: 308 },
+  top:   { x1: 38, y1: 202, x2: 352, y2: 212 },
 }
 
 // Extended clamp region for endpoint (Bug 4):

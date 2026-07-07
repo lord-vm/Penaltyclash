@@ -7,9 +7,9 @@ import PlayerFigure from './PlayerFigure.jsx'
 //   y 305–844 → pitch surface (64 %) — "65-70% of screen" per spec
 //   Horizon: y = 305
 //
-// Goal  (3:1 wide:tall)
+// Goal  (3:1 wide:tall — spec §8.4, exact)
 //   Left post x=45, right post x=345  →  width 300 px
-//   Crossbar y=195, goal-line y=305   →  height 110 px   ratio 2.73:1
+//   Crossbar y=205, goal-line y=305   →  height 100 px   ratio 3:1
 //
 // Keeper: scale 0.52, centred at (195, 270)
 //   Renders ≈ 65 % of goal height, ≈ 25 % of goal width with arms out
@@ -126,7 +126,7 @@ export default function Pitch({ country }) {
 
       {/* ── GOAL ────────────────────────────────────────────────────────── */}
       {/* Net fill */}
-      <path d="M45,195 L345,195 L345,305 L45,305 Z" fill="url(#gNet)" />
+      <path d="M45,205 L345,205 L345,305 L45,305 Z" fill="url(#gNet)" />
 
       {/* Net grid — polylines with intermediate sample points so Game.jsx can
           bend the strings during the goal ripple effect. data-base holds the
@@ -135,13 +135,13 @@ export default function Pitch({ country }) {
         {/* Vertical strings */}
         {Array.from({length:16},(_,i)=>{
           const x = 45 + i * 20
-          const pts = Array.from({length:12},(_,j)=>`${x},${195 + j * 10}`).join(' ')
+          const pts = Array.from({length:11},(_,j)=>`${x},${205 + j * 10}`).join(' ')
           return <polyline key={`nv${i}`} data-base={pts} points={pts} fill="none"
             stroke="rgba(255,255,255,0.13)" strokeWidth="0.8" />
         })}
         {/* Horizontal strings */}
         {Array.from({length:6},(_,i)=>{
-          const y = 207 + i * 17
+          const y = 217 + i * 17
           const pts = Array.from({length:16},(_,j)=>`${45 + j * 20},${y}`).join(' ')
           return <polyline key={`nh${i}`} data-base={pts} points={pts} fill="none"
             stroke="rgba(255,255,255,0.13)" strokeWidth="0.8" />
@@ -150,20 +150,20 @@ export default function Pitch({ country }) {
 
       {/* Left post — data-post group lets Game.jsx wobble it on impact */}
       <g data-post="left">
-        <rect x="38" y="192" width="10" height="115" rx="2" fill="#f0f0eb" />
-        <rect x="39" y="192" width="4"  height="115" fill="rgba(255,255,255,0.45)" />
+        <rect x="38" y="202" width="10" height="105" rx="2" fill="#f0f0eb" />
+        <rect x="39" y="202" width="4"  height="105" fill="rgba(255,255,255,0.45)" />
       </g>
 
       {/* Right post */}
       <g data-post="right">
-        <rect x="342" y="192" width="10" height="115" rx="2" fill="#f0f0eb" />
-        <rect x="343" y="192" width="4"  height="115" fill="rgba(255,255,255,0.45)" />
+        <rect x="342" y="202" width="10" height="105" rx="2" fill="#f0f0eb" />
+        <rect x="343" y="202" width="4"  height="105" fill="rgba(255,255,255,0.45)" />
       </g>
 
       {/* Crossbar */}
       <g data-post="top">
-        <rect x="38" y="192" width="314" height="10" rx="2" fill="#f0f0eb" />
-        <rect x="38" y="193" width="314" height="4"  fill="rgba(255,255,255,0.45)" />
+        <rect x="38" y="202" width="314" height="10" rx="2" fill="#f0f0eb" />
+        <rect x="38" y="203" width="314" height="4"  fill="rgba(255,255,255,0.45)" />
       </g>
 
       {/* Post base shadows on pitch */}

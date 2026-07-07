@@ -22,7 +22,10 @@ import {
   ballHitsKeeper, ballHitsPost, inGoalFrame,
   clampEndpoint, reflectVelocity, BALL_R,
 } from '../game/physics.js'
-import { playCrowdGroan, playCrowdCheer, playPostHit, playNetRipple } from '../lib/sfx.js'
+import {
+  playCrowdGroan, playCrowdCheer, playPostHit, playNetRipple,
+  playSaveThud, playKick,
+} from '../lib/sfx.js'
 import { fetchScoreboard } from '../lib/supabase.js'
 
 export default function Game({ country, onResult, onHome }) {
@@ -449,13 +452,14 @@ export default function Game({ country, onResult, onHome }) {
 
     // Show fading draw-path trail & fire
     showFadeTrail(sampled)
+    playKick()   // §9 — short low thud at the moment of release
     startShot(svgPath, keeperTarg, ballMs, power)
   }
 
   function _reject(msg) {
     phaseRef.current = 'idle'
     setHint(msg)
-    setTimeout(() => setHint(null), 1200)
+    setTimeout(() => setHint(null), 1000)   // §4.2 — hint shows for 1s
     // NOT counted as a shot
   }
 
@@ -667,6 +671,9 @@ export default function Game({ country, onResult, onHome }) {
     // particles + layered water-ripple/crowd-cheer audio. Purely visual/audio —
     // doesn't block the loop (next shot is playable as soon as phase resets).
     if (result === 'goal' && fx.impact) _goalFx(fx.impact)
+
+    // §9 — keeper save thud (deep bass), the moment the ball is stopped
+    if (result === 'save') playSaveThud()
 
     // v2 §5.2 — Fade ball travel trail on resolve.
     // Wide miss: trail lingers ~2x longer (FIFA-style tail as the ball sails past).

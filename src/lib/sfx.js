@@ -48,7 +48,7 @@ export function playCrowdGroan() {
 
     const g = c.createGain()
     g.gain.setValueAtTime(0.0001, t)
-    g.gain.exponentialRampToValueAtTime(0.45, t + 0.12)
+    g.gain.exponentialRampToValueAtTime(0.38, t + 0.12)
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur)
 
     src.connect(filt)
@@ -78,10 +78,12 @@ export function playCrowdCheer() {
     filt.frequency.exponentialRampToValueAtTime(1400, t + 0.25)
     filt.frequency.exponentialRampToValueAtTime(700, t + dur)
 
+    // Mix (§9 polish): crowd sits UNDER the impact sounds — save thud peaks
+    // at 0.55 and post hit at 0.7, so the roar never overpowers either.
     const g = c.createGain()
     g.gain.setValueAtTime(0.0001, t)
-    g.gain.exponentialRampToValueAtTime(0.4, t + 0.15)
-    g.gain.setValueAtTime(0.4, t + 0.45)
+    g.gain.exponentialRampToValueAtTime(0.35, t + 0.15)
+    g.gain.setValueAtTime(0.35, t + 0.45)
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur)
 
     src.connect(filt)
@@ -157,6 +159,86 @@ export function playPostHit() {
     sg.connect(c.destination)
     sh.start(t)
     sh.stop(t + 0.08)
+  } catch (_) { /* audio unavailable — fail silent */ }
+}
+
+/**
+ * Keeper save thud — §9: deep bass, ~150ms, low-frequency sine + short noise
+ * burst. Peaks at 0.55: clearly above the crowd (0.35-0.38), below the post
+ * hit (0.7) which stays the loudest single impact.
+ */
+export function playSaveThud() {
+  try {
+    const c = ac()
+    const t = c.currentTime
+
+    // Deep body — 65Hz sine dropping to 45Hz
+    const body = c.createOscillator()
+    body.type = 'sine'
+    body.frequency.setValueAtTime(65, t)
+    body.frequency.exponentialRampToValueAtTime(45, t + 0.15)
+    const bg = c.createGain()
+    bg.gain.setValueAtTime(0.0001, t)
+    bg.gain.exponentialRampToValueAtTime(0.55, t + 0.008)
+    bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.15)
+    body.connect(bg)
+    bg.connect(c.destination)
+    body.start(t)
+    body.stop(t + 0.16)
+
+    // Short low-passed noise burst — glove/body contact
+    const burst = c.createBufferSource()
+    burst.buffer = noiseBuffer(c, 0.06)
+    const lp = c.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 500
+    const ng = c.createGain()
+    ng.gain.setValueAtTime(0.3, t)
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.06)
+    burst.connect(lp)
+    lp.connect(ng)
+    ng.connect(c.destination)
+    burst.start(t)
+    burst.stop(t + 0.06)
+  } catch (_) { /* audio unavailable — fail silent */ }
+}
+
+/**
+ * Ball kick — §9: short low thud, ~80ms, at the moment of release.
+ * Quiet (0.3) — it fires on every shot and must not compete with outcomes.
+ */
+export function playKick() {
+  try {
+    const c = ac()
+    const t = c.currentTime
+
+    const osc = c.createOscillator()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(120, t)
+    osc.frequency.exponentialRampToValueAtTime(70, t + 0.08)
+    const g = c.createGain()
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.005)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08)
+    osc.connect(g)
+    g.connect(c.destination)
+    osc.start(t)
+    osc.stop(t + 0.09)
+
+    // Tiny leather-contact tick
+    const tick = c.createBufferSource()
+    tick.buffer = noiseBuffer(c, 0.02)
+    const hp = c.createBiquadFilter()
+    hp.type = 'highpass'
+    hp.frequency.value = 900
+    const tg = c.createGain()
+    tg.gain.setValueAtTime(0.08, t)
+    tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.02)
+    tick.connect(hp)
+    hp.connect(tg)
+    tg.connect(c.destination)
+    tick.start(t)
+    tick.stop(t + 0.02)
   } catch (_) { /* audio unavailable — fail silent */ }
 }
 

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { flagSrc } from '../data/countries.js'
 
@@ -66,23 +67,9 @@ function WinContent({ score, country, accent }) {
           WIN
         </motion.div>
 
-        {/* Particle dots — static stand-ins for Step 1 */}
-        {Array.from({ length: 12 }, (_, i) => {
-          const angle = (i / 12) * 360
-          const r = 90
-          const x = Math.cos((angle * Math.PI) / 180) * r
-          const y = Math.sin((angle * Math.PI) / 180) * r
-          return (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0, x: 0, y: 0 }}
-              animate={{ opacity: [0, 1, 0], x, y }}
-              transition={{ delay: 0.2 + i * 0.04, duration: 0.9 }}
-              className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full"
-              style={{ background: accent, marginTop: -4, marginLeft: -4 }}
-            />
-          )
-        })}
+        {/* Sparkle — §10: ~30 particles emit from the WIN text in accent
+            colors, fading over 1.5s */}
+        <Sparkles accent={accent} />
       </div>
 
       <div className="text-center">
@@ -99,6 +86,36 @@ function WinContent({ score, country, accent }) {
       </div>
     </div>
   )
+}
+
+function Sparkles({ accent }) {
+  // Random burst computed once per mount
+  const parts = useMemo(() =>
+    Array.from({ length: 30 }, () => {
+      const angle = Math.random() * Math.PI * 2
+      const dist  = 55 + Math.random() * 85
+      return {
+        x:     Math.cos(angle) * dist,
+        y:     Math.sin(angle) * dist * 0.85,   // slightly flattened burst
+        size:  3 + Math.random() * 4,
+        delay: Math.random() * 0.25,
+      }
+    }), [])
+
+  return parts.map((p, i) => (
+    <motion.span
+      key={i}
+      initial={{ opacity: 0, x: 0, y: 0, scale: 1 }}
+      animate={{ opacity: [0, 1, 0], x: p.x, y: p.y, scale: 0.4 }}
+      transition={{ delay: 0.15 + p.delay, duration: 1.5, ease: 'easeOut' }}
+      className="absolute top-1/2 left-1/2 rounded-full pointer-events-none"
+      style={{
+        width: p.size, height: p.size, background: accent,
+        marginTop: -p.size / 2, marginLeft: -p.size / 2,
+        boxShadow: `0 0 6px ${accent}`,
+      }}
+    />
+  ))
 }
 
 function LossContent({ score }) {

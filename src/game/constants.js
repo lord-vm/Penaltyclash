@@ -5,15 +5,15 @@
 //   Pitch surface:  y = 305 … 844  (64%)
 //   Horizon:        y = 305
 //
-// Goal frame (~2.7:1 wide:tall):
+// Goal frame (exactly 3:1 wide:tall — spec §8.4):
 //   Left post  x = 45,  right post x = 345  → width  300 px
-//   Crossbar   y = 195, goal-line  y = 305  → height 110 px
+//   Crossbar   y = 205, goal-line  y = 305  → height 100 px
 
 export const BALL_START = { x: 195, y: 490 }
 export const SHOT_COUNT = 5
 
 // Goal frame in SVG user units
-export const GOAL = { x1: 45, x2: 345, y1: 195, y2: 305 }
+export const GOAL = { x1: 45, x2: 345, y1: 205, y2: 305 }
 
 // Keeper resting position & dive targets (SVG user units; inner <g> uses scale 0.52)
 export const KEEPER_REST   = { x: 195, y: 268 }
