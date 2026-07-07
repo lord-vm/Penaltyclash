@@ -1,0 +1,10 @@
+# Supabase CLI config — only the parts this project needs.
+project_id = "penalty-clash"
+
+# Both endpoints are public ("no auth" per spec); abuse is handled by the
+# submit-win in-memory IP rate limit, and the anon key is public anyway.
+[functions.submit-win]
+verify_jwt = false
+
+[functions.scoreboard]
+verify_jwt = false

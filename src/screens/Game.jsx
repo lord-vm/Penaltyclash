@@ -23,12 +23,7 @@ import {
   clampEndpoint, reflectVelocity, BALL_R,
 } from '../game/physics.js'
 import { playCrowdGroan, playCrowdCheer, playPostHit, playNetRipple } from '../lib/sfx.js'
-
-const MOCK_NEIGHBORS = [
-  { rank: 13, code: 'MX', name: 'Mexico',  score: 12847, isUser: false },
-  { rank: 14, code: 'IN', name: 'India',   score: 9221,  isUser: true  },
-  { rank: 15, code: 'MA', name: 'Morocco', score: 8940,  isUser: false },
-]
+import { fetchScoreboard } from '../lib/supabase.js'
 
 export default function Game({ country, onResult, onHome }) {
   const [shotsDone, setShotsDone] = useState(0)
@@ -37,9 +32,19 @@ export default function Game({ country, onResult, onHome }) {
   const [hint,      setHint]      = useState(null)  // redraw hint text
   const [postFx,    setPostFx]    = useState(null)  // { x, y, key } — post-impact punch overlay
   const [goalFx,    setGoalFx]    = useState(null)  // { x, y, key, parts } — goal splash particles
+  const [neighbors, setNeighbors] = useState(null)  // §2.3 you+neighbors rows from scoreboard fn
   const netAnimRef = useRef(0)                      // cancels an in-flight net ripple on re-trigger
 
   const accent = country?.primary || '#FEDF00'
+
+  // API rows → NeighborPanel shape
+  const neighborRows = (neighbors ?? []).map(r => ({
+    rank:   r.rank,
+    code:   r.code,
+    name:   r.name,
+    score:  r.win_count,
+    isUser: r.code === country?.code,
+  }))
 
   // DOM refs — all animation bypasses React state for smoothness
   const containerRef  = useRef(null)
@@ -68,6 +73,21 @@ export default function Game({ country, onResult, onHome }) {
     placeBall(BALL_START, 1)
     placeKeeper(KEEPER_REST)
   }, [])
+
+  // v2 §2.3 — neighbor panel refreshes between shots OR every 5 seconds,
+  // whichever is later: the effect re-runs after each shot and an interval
+  // covers idle time; fetchScoreboard's 5s client cache enforces the "later".
+  useEffect(() => {
+    let live = true
+    const load = () => {
+      fetchScoreboard(country?.code).then(data => {
+        if (live && data?.neighbors) setNeighbors(data.neighbors)
+      })
+    }
+    load()
+    const iv = setInterval(load, 5000)
+    return () => { live = false; clearInterval(iv) }
+  }, [shotsDone, country?.code])
 
   // ── DOM helpers ───────────────────────────────────────────────────────────
 
@@ -834,13 +854,17 @@ export default function Game({ country, onResult, onHome }) {
         </div>
       </div>
 
-      {/* Neighbor scoreboard */}
-      <div className="absolute right-2 top-1/3 z-20 hidden sm:flex flex-col gap-1 pointer-events-none">
-        <NeighborPanel rows={MOCK_NEIGHBORS} accent={accent} country={country} />
-      </div>
-      <div className="absolute bottom-0 left-0 right-0 z-20 sm:hidden px-2 pb-2 pointer-events-none">
-        <NeighborPanel rows={MOCK_NEIGHBORS} accent={accent} country={country} horizontal />
-      </div>
+      {/* Neighbor scoreboard (live data; hidden until the first fetch lands) */}
+      {neighborRows.length > 0 && (
+        <>
+          <div className="absolute right-2 top-1/3 z-20 hidden sm:flex flex-col gap-1 pointer-events-none">
+            <NeighborPanel rows={neighborRows} accent={accent} country={country} />
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 z-20 sm:hidden px-2 pb-2 pointer-events-none">
+            <NeighborPanel rows={neighborRows} accent={accent} country={country} horizontal />
+          </div>
+        </>
+      )}
 
       {/* Result flash */}
       <AnimatePresence>

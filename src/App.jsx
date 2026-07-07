@@ -5,7 +5,8 @@ import CountrySelect from './screens/CountrySelect.jsx'
 import Game from './screens/Game.jsx'
 import Result from './screens/Result.jsx'
 import Scoreboard from './screens/Scoreboard.jsx'
-import { getStoredCountry, setStoredCountry } from './lib/storage.js'
+import { getStoredCountry, setStoredCountry, getDeviceId } from './lib/storage.js'
+import { submitWin } from './lib/supabase.js'
 
 const FADE = {
   initial:    { opacity: 0 },
@@ -34,6 +35,11 @@ export default function App() {
     setOutcome(result)
     setScore(actualScore ?? (result === 'win' ? 4 : 2))
     setScreen('result')
+    // v2 §12.2 — a WIN posts +1 for the country. Fire-and-forget: the server
+    // validates, rate-limits and is the source of truth; the UI never blocks.
+    if (result === 'win' && country) {
+      submitWin(country.code, getDeviceId())
+    }
   }
 
   return (
