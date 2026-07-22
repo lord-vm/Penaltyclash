@@ -1,6 +1,7 @@
 const COUNTRY_KEY = 'pc_country'
 const MODE_KEY = 'pc_mode'
 const MUTE_KEY = 'pc_mute'
+const CROWD_MUTE_KEY = 'pc_crowd_muted'
 const DEVICE_KEY = 'pc_device_id'
 
 export function getStoredCountry() {
@@ -48,4 +49,14 @@ export function getMute() {
 
 export function setMute(val) {
   localStorage.setItem(MUTE_KEY, String(val))
+}
+
+// Crowd ambience on/off — a separate, narrower toggle than the (currently
+// unwired) global getMute/setMute above; only gates the stadium crowd bed.
+export function getCrowdMuted() {
+  return localStorage.getItem(CROWD_MUTE_KEY) === 'true'
+}
+
+export function setCrowdMuted(val) {
+  localStorage.setItem(CROWD_MUTE_KEY, String(val))
 }
