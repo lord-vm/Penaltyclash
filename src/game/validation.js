@@ -2,6 +2,7 @@ import { pathLength } from './pathUtils.js'
 import {
   SINUOSITY_LIMIT, LOOP_RADIUS_PX, LOOP_MIN_TRAVEL,
   MAX_CURVE_RATIO, SEVERE_CURVE_RATIO,
+  REVERSAL_STEP_PX, REVERSAL_MIN_TURN,
 } from './constants.js'
 
 /**
@@ -108,4 +109,64 @@ export function clampOrRejectCurve(pts) {
              y: s.y + proj * dirY + perp * perpY }
   })
   return { action: 'clamp', pts: clamped }
+}
+
+/**
+ * Count genuine curve-direction reversals in a smoothed screen path.
+ *
+ * A legal shot bends one consistent direction (a single arc toward a corner)
+ * → 0 reversals. An S-curve reverses once; a multi-wobble snake reverses
+ * repeatedly. This layers ON TOP of clampOrRejectCurve — the peak-deviation
+ * limit can't see reversals because it takes the ABSOLUTE distance from the
+ * centerline, so opposite-side lobes both look small.
+ *
+ * Method:
+ *  1. Resample the path at a fixed arc-length stride (REVERSAL_STEP_PX) so
+ *     finger tremor inside a stride averages out into the segment direction.
+ *  2. At each junction take the signed turn (2D cross product) between
+ *     consecutive segment vectors; only keep a bend sign when the turn angle
+ *     exceeds REVERSAL_MIN_TURN (near-straight junctions carry no sign).
+ *  3. Count ALTERNATIONS in that sign sequence — every left↔right flip is a
+ *     reversal. (The previous "persistence" state machine could never see an
+ *     oscillation: each flip returned to the original committed sign, which
+ *     reset the persistence counter, so true snakes reported 0 reversals.)
+ */
+export function curveReversals(pts) {
+  if (pts.length < 3) return 0
+
+  // 1. Resample at fixed arc-length stride
+  const stepped = [pts[0]]
+  let acc = 0
+  for (let i = 1; i < pts.length; i++) {
+    acc += Math.hypot(pts[i].x - pts[i-1].x, pts[i].y - pts[i-1].y)
+    if (acc >= REVERSAL_STEP_PX) { stepped.push(pts[i]); acc = 0 }
+  }
+  const last = pts[pts.length - 1]
+  const tail = stepped[stepped.length - 1]
+  if (tail.x !== last.x || tail.y !== last.y) stepped.push(last)
+  if (stepped.length < 3) return 0
+
+  const minSin = Math.sin((REVERSAL_MIN_TURN * Math.PI) / 180)
+
+  // 2. Collect the signed sequence of real (angle-gated) turns
+  const signs = []
+  for (let i = 1; i < stepped.length - 1; i++) {
+    const ax = stepped[i].x   - stepped[i-1].x
+    const ay = stepped[i].y   - stepped[i-1].y
+    const bx = stepped[i+1].x - stepped[i].x
+    const by = stepped[i+1].y - stepped[i].y
+    const la = Math.hypot(ax, ay), lb = Math.hypot(bx, by)
+    if (la < 1e-6 || lb < 1e-6) continue
+
+    const cross = (ax * by - ay * bx) / (la * lb)   // sin(turn angle), signed
+    if (Math.abs(cross) < minSin) continue          // near-straight → no sign
+    signs.push(cross > 0 ? 1 : -1)
+  }
+
+  // 3. Reversals = alternations in the bend-sign sequence
+  let reversals = 0
+  for (let i = 1; i < signs.length; i++) {
+    if (signs[i] !== signs[i - 1]) reversals++
+  }
+  return reversals
 }

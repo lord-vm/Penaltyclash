@@ -39,6 +39,14 @@ export const SINUOSITY_LIMIT = 3.0  // max (path length / straight dist) ratio (
 export const MAX_CURVE_RATIO    = 0.22  // clamp  if peak perp deviation > 22% of straight dist
 export const SEVERE_CURVE_RATIO = 0.33  // reject if peak perp deviation > 33% of straight dist
 
+// ── Curve-direction-reversal check (rejects S-curves / multi-bend squiggles) ─
+// Peak-deviation (above) only catches a single bend; an S-curve keeps each lobe
+// under SEVERE and slips through. This layered check counts how many times the
+// path meaningfully reverses bend direction.
+export const REVERSAL_STEP_PX   = 24    // arc-length stride for coarse segment vectors (jitter filter)
+export const REVERSAL_MIN_TURN  = 18    // min turn angle (deg) at a junction to count as a real bend
+export const MAX_REVERSALS      = 1     // allow ≤1 (single S / end-settle); reject at 2+ ('wavy')
+
 // ── v2 §6.4 — post deflection ────────────────────────────────────────────────
 export const DEFLECT_RETAIN = 0.60  // fraction of velocity kept after post contact (40% lost)
 export const DEFLECT_MS     = 400   // post-deflection travel time in ms (v1 was 220)
