@@ -63,6 +63,38 @@ export function normalizePath(screenPts, svgTarget, containerEl) {
   }))
 }
 
+/**
+ * Resample a polyline into `count` points evenly spaced by ARC LENGTH.
+ * Pointer samples are spaced by drawing speed, not distance, so index-based
+ * interpolation replays the player's hand speed as ball speed. Emitted points
+ * lie exactly on the original polyline (same curve, redistributed samples);
+ * first/last points are preserved exactly — the endpoint decides the outcome.
+ */
+export function resampleByArcLength(pts, count) {
+  if (pts.length < 3 || count < 2) return [...pts]
+
+  // Cumulative arc-length table
+  const cum = [0]
+  for (let i = 1; i < pts.length; i++) {
+    cum.push(cum[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y))
+  }
+  const total = cum[cum.length - 1]
+  if (total < 1e-6) return [...pts]   // degenerate: all points coincide
+
+  const out = [pts[0]]
+  let seg = 1
+  for (let i = 1; i < count - 1; i++) {
+    const target = (total * i) / (count - 1)
+    while (seg < pts.length - 1 && cum[seg] < target) seg++
+    const a = pts[seg - 1], b = pts[seg]
+    const segLen = cum[seg] - cum[seg - 1] || 1e-6
+    const f = (target - cum[seg - 1]) / segLen
+    out.push({ x: a.x + f * (b.x - a.x), y: a.y + f * (b.y - a.y) })
+  }
+  out.push(pts[pts.length - 1])
+  return out
+}
+
 // Linearly interpolate position along path at t ∈ [0,1]
 export function interpolatePath(pts, t) {
   if (!pts || pts.length === 0) return BALL_START
@@ -86,18 +118,10 @@ export function easeOut(t) {
 }
 
 /**
- * v2 §5.1 — Ball velocity profile.
- * Accelerates over first 15% (foot impact burst), constant through middle,
- * decelerates slightly over final 15% (air drag feel).
+ * v2 §5.1 — Ball velocity profile: constant speed, start to finish.
+ * Linear time→distance mapping — no acceleration phases at all. Collision
+ * checks are position-based, so this only changes pacing, not outcomes.
  */
 export function ballVelocityProfile(t) {
-  if (t < 0.15) {
-    const n = t / 0.15
-    return n * n * 0.15            // quadratic ramp-up → reaches 0.15 at t=0.15
-  }
-  if (t <= 0.85) {
-    return t                       // linear / constant velocity through middle
-  }
-  const n = (t - 0.85) / 0.15
-  return 0.85 + (1 - (1 - n) * (1 - n)) * 0.15  // slight ease-in at end
+  return t
 }

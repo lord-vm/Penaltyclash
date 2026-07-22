@@ -24,9 +24,9 @@ export const KEEPER_CENTER = { x: 195, y: 260, r:   0 }
 // Path-drawing power thresholds (screen px per second)  — §4.5
 export const SPEED_SLOW = 400
 export const SPEED_FAST = 1200
-export const DUR_SLOW   = 900   // ms
-export const DUR_MED    = 650   // ms
-export const DUR_FAST   = 400   // ms
+export const DUR_SLOW   = 600   // ms
+export const DUR_MED    = 420   // ms
+export const DUR_FAST   = 250   // ms
 
 // ── v2 §4.2 — path validation (more lenient than v1) ────────────────────────
 export const MIN_PATH_PX     = 40    // minimum total length to register a shot
