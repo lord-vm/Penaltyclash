@@ -53,12 +53,16 @@ export default function PlayerFigure({ accent = '#0055A4', accent2 = '#FFFFFF', 
       <text x="0" y="-24" textAnchor="middle" fill={accent2} fontSize="28" fontWeight="bold"
         fontFamily="Anton, sans-serif" opacity="0.8">{number}</text>
 
-      {/* Name band at top of number — real shooter surname (fitted to band) */}
-      <rect x="-22" y="-60" width="44" height="10" rx="2" fill="rgba(0,0,0,0.2)" />
+      {/* Name — sits directly on the jersey now (no band behind it). A thin
+          dark stroke behind the fill (paintOrder puts stroke under fill, so
+          it reads as a soft outline rather than a thick border) keeps it
+          legible regardless of how well accent2 happens to contrast with
+          the jersey's own accent color. */}
       {label && (
         <text x="0" y="-52" textAnchor="middle" fill={accent2}
           fontSize={nameFont} fontWeight="bold" fontFamily="Anton, sans-serif"
-          opacity="0.9">{label}</text>
+          stroke="rgba(0,0,0,0.5)" strokeWidth="0.6" paintOrder="stroke"
+          opacity="0.95">{label}</text>
       )}
 
       {/* === SLEEVES + ARMS === */}

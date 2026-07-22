@@ -1115,8 +1115,16 @@ export default function Game({ country, mode = 'country', onResult, onHome }) {
         onPointerUp={onPointerUp}
       />
 
-      {/* HUD */}
-      <div className="relative z-20 flex items-center justify-between px-4 pt-3 pb-2 pointer-events-none">
+      {/* HUD — 3-column grid (Tailwind's grid-cols-3 uses minmax(0,1fr) per
+          track, so each column is genuinely bounded to 1/3 width — the
+          center goal count stays truly centered regardless of the left
+          group's width, and the corner scoreboard column can't grow past
+          its share and spill into the others). items-start so a taller
+          (wrapped) corner panel doesn't stretch/re-center the whole row.
+          Visual hierarchy: the score is the primary element (largest text,
+          the only one that glows/animates) — badge+pips and the scoreboard
+          panel are deliberately smaller and quieter, reading as secondary. */}
+      <div className="relative z-20 grid grid-cols-3 items-start px-4 pt-3 pb-2 pointer-events-none">
         <div className="flex items-center gap-3">
           <button className="pointer-events-auto opacity-80" onClick={onHome}>
             {country
@@ -1130,24 +1138,44 @@ export default function Game({ country, mode = 'country', onResult, onHome }) {
               </span>
             : <ShotPips total={SHOT_COUNT} done={shotsDone} accent={accent} />}
         </div>
-        <div className="font-display text-2xl leading-none px-3 py-1 rounded-lg"
-          style={{ color: accent, background: 'rgba(0,0,0,0.38)' }}>
-          {suddenDeath ? `${goals}–${saves}` : `${goals}/${SHOT_COUNT}`}
+        <div className="flex justify-center">
+          {/* Floating text — no chip behind it. The glow (color layers +
+              a soft dark ground shadow) is what keeps it legible once it's
+              sitting directly over bright sky/stadium instead of a dark
+              box. `key={goals}` remounts this element specifically when
+              the goals count changes (not on saves, sudden-death toggling,
+              or any other re-render), so the punch-in keyframe below only
+              ever plays on an actual goal. */}
+          <motion.div
+            key={goals}
+            initial={{ scale: 1 }}
+            animate={{ scale: [1, 1.3, 1] }}
+            transition={{ duration: 0.28, times: [0, 0.4, 1], ease: 'easeOut' }}
+            className="font-display text-3xl leading-none"
+            style={{
+              color: accent,
+              textShadow: `0 0 18px ${accent}, 0 0 6px ${accent}, 0 2px 5px rgba(0,0,0,0.6)`,
+            }}
+          >
+            {suddenDeath ? `${goals}–${saves}` : `${goals}/${SHOT_COUNT}`}
+          </motion.div>
+        </div>
+        {/* Neighbor scoreboard (live data; hidden until the first fetch
+            lands) — sits right in the corner, flush with the badge/goal
+            count row rather than floating below it. */}
+        <div className="flex justify-end">
+          {neighborRows.length > 0 && (
+            <>
+              <div className="hidden sm:flex flex-col gap-1">
+                <NeighborPanel rows={neighborRows} accent={accent} country={country} mode={mode} />
+              </div>
+              <div className="sm:hidden">
+                <NeighborPanel rows={neighborRows} accent={accent} country={country} mode={mode} horizontal />
+              </div>
+            </>
+          )}
         </div>
       </div>
-
-
-      {/* Neighbor scoreboard (live data; hidden until the first fetch lands) */}
-      {neighborRows.length > 0 && (
-        <>
-          <div className="absolute right-2 top-1/3 z-20 hidden sm:flex flex-col gap-1 pointer-events-none">
-            <NeighborPanel rows={neighborRows} accent={accent} country={country} mode={mode} />
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 z-20 sm:hidden px-2 pb-2 pointer-events-none">
-            <NeighborPanel rows={neighborRows} accent={accent} country={country} mode={mode} horizontal />
-          </div>
-        </>
-      )}
 
       {/* Result flash */}
       <AnimatePresence>
@@ -1231,15 +1259,24 @@ function neighborEntityFor(code, mode) {
   return (mode === 'club' ? CLUBS : COUNTRIES).find(e => e.code === code)
 }
 
+// Row text needs its own legibility treatment now that there's no dark
+// backing — a tight dark drop-shadow (not a colored glow, this is small
+// utilitarian text, not the hero score) reads fine over either bright sky
+// or dark stadium. Set once here and inherited by every child span.
+const NEIGHBOR_ROW_SHADOW = '0 1px 4px rgba(0,0,0,0.85)'
+
 function NeighborPanel({ rows, accent, country, mode, horizontal }) {
   if (horizontal) return (
-    <div className="flex justify-center gap-3 bg-black/40 backdrop-blur-sm rounded-xl px-3 py-2">
+    <div className="flex justify-end flex-wrap gap-x-2 gap-y-1 rounded-xl px-3 py-2 border border-white/20">
       {rows.map(r => (
-        <div key={r.rank} className="flex items-center gap-1"
-          style={{ color: r.isUser ? accent : 'rgba(255,255,255,0.7)' }}>
+        <div key={r.code} className="flex items-center gap-1"
+          style={{ color: r.isUser ? accent : 'rgba(255,255,255,0.75)', textShadow: NEIGHBOR_ROW_SHADOW }}>
           <span className="font-body text-xs opacity-60">#{r.rank}</span>
           <TeamBadge entity={neighborEntityFor(r.code, mode)} mode={mode} size={20} />
-          <span className="font-body text-xs font-semibold">{r.name}</span>
+          {/* Code (e.g. "BR", "RMA") instead of the full name — same short
+              form already used for the club badges, much narrower than
+              names like "Saudi Arabia" or "Bayern Munich". */}
+          <span className="font-body text-xs font-semibold">{r.code}</span>
           <span className="font-display text-sm">{r.score.toLocaleString()}</span>
           {r.isUser && <span className="font-body text-[9px] opacity-60">← you</span>}
         </div>
@@ -1247,13 +1284,13 @@ function NeighborPanel({ rows, accent, country, mode, horizontal }) {
     </div>
   )
   return (
-    <div className="flex flex-col gap-0.5 bg-black/40 backdrop-blur-sm rounded-xl px-3 py-2 min-w-[155px]">
+    <div className="flex flex-col gap-1 rounded-xl px-3 py-2 border border-white/20">
       {rows.map(r => (
-        <div key={r.rank} className="flex items-center gap-1.5"
-          style={{ color: r.isUser ? accent : 'rgba(255,255,255,0.75)' }}>
+        <div key={r.code} className="flex items-center gap-1.5"
+          style={{ color: r.isUser ? accent : 'rgba(255,255,255,0.8)', textShadow: NEIGHBOR_ROW_SHADOW }}>
           <span className="font-body text-[10px] opacity-60 w-6 text-right">#{r.rank}</span>
           <TeamBadge entity={neighborEntityFor(r.code, mode)} mode={mode} size={20} />
-          <span className="font-body text-xs flex-1 font-medium">{r.name}</span>
+          <span className="font-body text-xs flex-1 font-medium">{r.code}</span>
           <span className="font-display text-xs">{r.score.toLocaleString()}</span>
           {r.isUser && <span className="font-body text-[9px] opacity-50">←</span>}
         </div>

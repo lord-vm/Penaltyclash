@@ -50,7 +50,7 @@ export default function Scoreboard({ country, mode = 'country', onBack }) {
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="flex-1 overflow-y-auto no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
         {rows === null && (
           <p className="font-body text-white/30 text-sm text-center pt-10">Loading…</p>
         )}
