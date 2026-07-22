@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { flagSrc } from '../data/countries.js'
+import TeamBadge from '../components/TeamBadge.jsx'
 
-export default function Result({ outcome, score, country, onPlayAgain, onScoreboard, onHome }) {
+export default function Result({ outcome, score, suddenDeath, country, mode = 'country', onPlayAgain, onScoreboard, onHome }) {
   const isWin = outcome === 'win'
   const accent = country?.primary || '#FEDF00'
 
@@ -18,7 +18,16 @@ export default function Result({ outcome, score, country, onPlayAgain, onScorebo
       </div>
 
       <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-sm">
-        {isWin ? <WinContent score={score} country={country} accent={accent} /> : <LossContent score={score} />}
+        {isWin
+          ? <WinContent score={score} country={country} mode={mode} accent={accent} />
+          : <LossContent score={score} mode={mode} />}
+
+        {suddenDeath && (
+          <span className="font-display text-sm tracking-widest px-3 py-1 rounded-full border"
+            style={{ color: '#ff5555', borderColor: 'rgba(255,85,85,0.4)' }}>
+            DECIDED IN SUDDEN DEATH
+          </span>
+        )}
 
         {/* Buttons */}
         <div className="flex flex-col gap-3 w-full mt-4">
@@ -52,7 +61,8 @@ export default function Result({ outcome, score, country, onPlayAgain, onScorebo
   )
 }
 
-function WinContent({ score, country, accent }) {
+function WinContent({ score, country, mode, accent }) {
+  const isClub = mode === 'club'
   return (
     <div className="flex flex-col items-center gap-4">
       {/* Sparkle ring */}
@@ -78,10 +88,13 @@ function WinContent({ score, country, accent }) {
         </p>
         {country && (
           <p className="font-body text-white/60 text-sm mt-1 flex items-center justify-center gap-1.5">
-            +1 for
-            <img src={flagSrc(country.code)} alt={country.name} className="w-5 h-auto rounded-sm" />
+            {isClub ? 'for' : '+1 for'}
+            <TeamBadge entity={country} mode={mode} size={20} />
             {country.name}
           </p>
+        )}
+        {isClub && (
+          <p className="font-body text-white/35 text-xs mt-1">Club mode — not counted on the leaderboard</p>
         )}
       </div>
     </div>
@@ -118,7 +131,7 @@ function Sparkles({ accent }) {
   ))
 }
 
-function LossContent({ score }) {
+function LossContent({ score, mode }) {
   return (
     <div className="flex flex-col items-center gap-4">
       <motion.div
@@ -134,7 +147,9 @@ function LossContent({ score }) {
       </motion.div>
 
       <p className="font-display text-white/40 text-3xl">{score ?? 2}/5</p>
-      <p className="font-body text-white/30 text-sm">Score 3 or more to win for your country</p>
+      <p className="font-body text-white/30 text-sm">
+        Score 3 or more to win {mode === 'club' ? 'the shootout' : 'for your country'}
+      </p>
     </div>
   )
 }

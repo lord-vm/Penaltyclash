@@ -5,7 +5,10 @@ import CountrySelect from './screens/CountrySelect.jsx'
 import Game from './screens/Game.jsx'
 import Result from './screens/Result.jsx'
 import Scoreboard from './screens/Scoreboard.jsx'
-import { getStoredCountry, setStoredCountry, getDeviceId } from './lib/storage.js'
+import {
+  getStoredCountry, setStoredCountry, getDeviceId,
+  getStoredMode, setStoredMode,
+} from './lib/storage.js'
 import { submitWin } from './lib/supabase.js'
 
 const FADE = {
@@ -17,27 +20,32 @@ const FADE = {
 
 export default function App() {
   const [screen,  setScreen]  = useState('home')
-  const [country, setCountry] = useState(getStoredCountry)
+  const [country, setCountry] = useState(getStoredCountry)   // selected entity (country OR club)
+  const [mode,    setMode]    = useState(getStoredMode)      // 'country' | 'club'
   const [outcome, setOutcome] = useState(null)
   const [score,   setScore]   = useState(null)
+  const [wasSuddenDeath, setWasSuddenDeath] = useState(false)
 
   function handlePlay() {
     setScreen(country ? 'game' : 'countrySelect')
   }
 
-  function handleCountryConfirm(c) {
-    setStoredCountry(c)
-    setCountry(c)
+  function handleCountryConfirm(entity, selectedMode = 'country') {
+    setStoredCountry(entity)
+    setStoredMode(selectedMode)
+    setCountry(entity)
+    setMode(selectedMode)
     setScreen('game')
   }
 
-  function handleResult(result, actualScore) {
+  function handleResult(result, actualScore, suddenDeath = false) {
     setOutcome(result)
     setScore(actualScore ?? (result === 'win' ? 4 : 2))
+    setWasSuddenDeath(suddenDeath)
     setScreen('result')
-    // v2 §12.2 — a WIN posts +1 for the country. Fire-and-forget: the server
-    // validates, rate-limits and is the source of truth; the UI never blocks.
-    if (result === 'win' && country) {
+    // v2 §12.2 — a WIN posts +1 for the country. ONLY country-mode wins count on
+    // the global leaderboard; club mode is a leaderboard-free "for fun" mode.
+    if (result === 'win' && mode === 'country' && country) {
       submitWin(country.code, getDeviceId())
     }
   }
@@ -64,7 +72,9 @@ export default function App() {
             <Screen key="home">
               <Home
                 savedCountry={country}
+                mode={mode}
                 onPlay={handlePlay}
+                onChangeTeam={() => setScreen('countrySelect')}
                 onScoreboard={() => setScreen('scoreboard')}
               />
             </Screen>
@@ -73,6 +83,7 @@ export default function App() {
           {screen === 'countrySelect' && (
             <Screen key="countrySelect">
               <CountrySelect
+                initialMode={mode}
                 onConfirm={handleCountryConfirm}
                 onBack={() => setScreen('home')}
               />
@@ -83,6 +94,7 @@ export default function App() {
             <Screen key="game">
               <Game
                 country={country}
+                mode={mode}
                 onResult={handleResult}
                 onHome={() => setScreen('home')}
               />
@@ -94,7 +106,9 @@ export default function App() {
               <Result
                 outcome={outcome}
                 score={score}
+                suddenDeath={wasSuddenDeath}
                 country={country}
+                mode={mode}
                 onPlayAgain={() => setScreen('game')}
                 onScoreboard={() => setScreen('scoreboard')}
                 onHome={() => setScreen('home')}

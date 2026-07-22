@@ -2,11 +2,19 @@
 // Origin at hip-center. Height spans roughly y=-130 to y=110.
 // accent  = primary jersey color (country)
 // accent2 = secondary color (shorts / collar trim)
-export default function PlayerFigure({ accent = '#0055A4', accent2 = '#FFFFFF' }) {
+// name    = current shooter's surname (printed in the jersey name band)
+// number  = current shooter's shirt number (defaults to 9 when no lineup data)
+export default function PlayerFigure({ accent = '#0055A4', accent2 = '#FFFFFF', name = '', number = 9 }) {
   const skin   = '#C8834A'
   const hair   = '#1a1109'
   const boot   = '#111111'
   const shortColor = accent2 === '#FFFFFF' ? '#e0e0e0' : accent2
+
+  // Name band fit: uppercase; font-size scales inversely with length so the
+  // printed width stays ~constant inside the 44-wide band (capped at 9 to fit
+  // the band height). Long names shrink but stay legible — no truncation.
+  const label    = String(name || '').toUpperCase()
+  const nameFont = label ? Math.min(9, 90 / label.length) : 0
 
   return (
     <g style={{ animation: 'playerSway 2.2s ease-in-out infinite, weightShift 1.8s ease-in-out infinite', transformOrigin: '0px 0px' }}>
@@ -43,10 +51,15 @@ export default function PlayerFigure({ accent = '#0055A4', accent2 = '#FFFFFF' }
 
       {/* Jersey number on back */}
       <text x="0" y="-24" textAnchor="middle" fill={accent2} fontSize="28" fontWeight="bold"
-        fontFamily="Anton, sans-serif" opacity="0.8">9</text>
+        fontFamily="Anton, sans-serif" opacity="0.8">{number}</text>
 
-      {/* Name band at top of number */}
-      <rect x="-22" y="-60" width="44" height="10" rx="2" fill="rgba(0,0,0,0.12)" />
+      {/* Name band at top of number — real shooter surname (fitted to band) */}
+      <rect x="-22" y="-60" width="44" height="10" rx="2" fill="rgba(0,0,0,0.2)" />
+      {label && (
+        <text x="0" y="-52" textAnchor="middle" fill={accent2}
+          fontSize={nameFont} fontWeight="bold" fontFamily="Anton, sans-serif"
+          opacity="0.9">{label}</text>
+      )}
 
       {/* === SLEEVES + ARMS === */}
       {/* Left arm (hanging slightly back) */}

@@ -15,7 +15,7 @@ import PlayerFigure from './PlayerFigure.jsx'
 //   Renders ≈ 65 % of goal height, ≈ 25 % of goal width with arms out
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function Pitch({ country }) {
+export default function Pitch({ country, shooter }) {
   const accent  = country?.primary   || '#0055A4'
   const accent2 = country?.secondary || '#FFFFFF'
 
@@ -196,7 +196,7 @@ export default function Pitch({ country }) {
       {/* ── PLAYER (back-view shooter) ─────────────────────────────────── */}
       {/* Positioned so upper body + head visible in lower frame */}
       <g transform="translate(195,790) scale(1.38)">
-        <PlayerFigure accent={accent} accent2={accent2} />
+        <PlayerFigure accent={accent} accent2={accent2} name={shooter?.name} number={shooter?.number} />
       </g>
 
       {/* ── VIGNETTE ───────────────────────────────────────────────────── */}

@@ -1,12 +1,23 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { COUNTRIES, flagSrc } from '../data/countries.js'
+import { COUNTRIES } from '../data/countries.js'
+import { CLUBS } from '../data/clubs.js'
+import TeamBadge from '../components/TeamBadge.jsx'
 
-export default function CountrySelect({ onConfirm, onBack }) {
+export default function CountrySelect({ onConfirm, onBack, initialMode = 'country' }) {
+  const [mode, setMode] = useState(initialMode === 'club' ? 'club' : 'country')
   const [selected, setSelected] = useState(null)
 
+  const list = mode === 'club' ? CLUBS : COUNTRIES
+
+  function switchMode(next) {
+    if (next === mode) return
+    setMode(next)
+    setSelected(null)   // selection from the other list no longer applies
+  }
+
   function handleConfirm() {
-    if (selected) onConfirm(selected)
+    if (selected) onConfirm(selected, mode)
   }
 
   return (
@@ -20,7 +31,26 @@ export default function CountrySelect({ onConfirm, onBack }) {
         >
           ←
         </button>
-        <h2 className="font-display text-white text-2xl tracking-wide">PICK YOUR COUNTRY</h2>
+        <h2 className="font-display text-white text-2xl tracking-wide">
+          PICK YOUR {mode === 'club' ? 'CLUB' : 'COUNTRY'}
+        </h2>
+      </div>
+
+      {/* COUNTRY / CLUB toggle */}
+      <div className="flex gap-2 px-4 pt-3">
+        {['country', 'club'].map((m) => (
+          <button
+            key={m}
+            onClick={() => switchMode(m)}
+            className="flex-1 font-display tracking-wider text-lg py-2 rounded-lg transition-colors"
+            style={{
+              background: mode === m ? '#FEDF00' : 'rgba(255,255,255,0.06)',
+              color: mode === m ? '#0c1014' : 'rgba(255,255,255,0.6)',
+            }}
+          >
+            {m === 'club' ? 'CLUB' : 'COUNTRY'}
+          </button>
+        ))}
       </div>
 
       {/* Grid */}
@@ -29,7 +59,7 @@ export default function CountrySelect({ onConfirm, onBack }) {
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div className="grid grid-cols-4 gap-2">
-          {COUNTRIES.map((c) => {
+          {list.map((c) => {
             const isSelected = selected?.code === c.code
             return (
               <motion.button
@@ -44,7 +74,7 @@ export default function CountrySelect({ onConfirm, onBack }) {
                   transition: 'transform 0.15s, border-color 0.15s, background 0.15s',
                 }}
               >
-                <img src={flagSrc(c.code)} alt={c.name} className="w-10 h-auto rounded-sm" />
+                <TeamBadge entity={c} mode={mode} size={40} />
                 <span className="font-body text-white/70 text-[10px] text-center leading-tight">
                   {c.name}
                 </span>
@@ -59,7 +89,7 @@ export default function CountrySelect({ onConfirm, onBack }) {
         {selected && (
           <p className="font-body text-white/50 text-xs text-center mb-2 flex items-center justify-center gap-1.5">
             Playing for{' '}
-            <img src={flagSrc(selected.code)} alt={selected.name} className="w-5 h-auto rounded-sm" />
+            <TeamBadge entity={selected} mode={mode} size={20} />
             <span className="text-white font-semibold">{selected.name}</span>
           </p>
         )}

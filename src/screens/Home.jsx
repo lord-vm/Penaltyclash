@@ -1,7 +1,24 @@
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { flagSrc } from '../data/countries.js'
+import TeamBadge from '../components/TeamBadge.jsx'
+import { getCrowdMuted, setCrowdMuted } from '../lib/storage.js'
+import { muteCrowd } from '../lib/sfx.js'
 
-export default function Home({ onPlay, onScoreboard, savedCountry }) {
+export default function Home({ onPlay, onScoreboard, onChangeTeam, savedCountry, mode = 'country' }) {
+  const [crowdMuted, setCrowdMutedState] = useState(getCrowdMuted)
+
+  // Apply the persisted preference to the live audio graph on mount — covers
+  // both "first ever load" and "backed out to Home while a match's ambience
+  // is still playing" (muteCrowd()/crowdBus() are lazy/idempotent either way).
+  useEffect(() => { muteCrowd(crowdMuted) }, [])
+
+  function toggleCrowd() {
+    const next = !crowdMuted
+    setCrowdMutedState(next)
+    setCrowdMuted(next)
+    muteCrowd(next)
+  }
+
   return (
     <div className="relative flex flex-col items-center justify-center h-full w-full overflow-hidden select-none">
       {/* Stadium background */}
@@ -9,6 +26,17 @@ export default function Home({ onPlay, onScoreboard, savedCountry }) {
 
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/50" />
+
+      {/* Crowd sound toggle — menu-level preference, persisted */}
+      <motion.button
+        whileTap={{ scale: 0.9 }}
+        onClick={toggleCrowd}
+        aria-label={crowdMuted ? 'Unmute crowd sound' : 'Mute crowd sound'}
+        className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-full px-3 py-1.5 backdrop-blur-sm"
+      >
+        <span className="text-base leading-none">{crowdMuted ? '🔇' : '🔊'}</span>
+        <span className="font-body text-white/60 text-[10px] uppercase tracking-wider">Crowd</span>
+      </motion.button>
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center gap-6 px-6 w-full max-w-sm">
@@ -31,12 +59,19 @@ export default function Home({ onPlay, onScoreboard, savedCountry }) {
           </p>
         </div>
 
-        {/* Returning player chip */}
+        {/* Returning player chip — tap to change team / mode */}
         {savedCountry && (
-          <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5">
-            <img src={flagSrc(savedCountry.code)} alt={savedCountry.name} className="w-6 h-auto rounded-sm" />
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={onChangeTeam}
+            className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full pl-4 pr-3 py-1.5"
+          >
+            <TeamBadge entity={savedCountry} mode={mode} size={24} />
             <span className="font-body text-white text-sm font-medium">{savedCountry.name}</span>
-          </div>
+            <span className="font-body text-white/45 text-[10px] uppercase tracking-wider border-l border-white/20 pl-2">
+              Change
+            </span>
+          </motion.button>
         )}
 
         {/* Buttons */}

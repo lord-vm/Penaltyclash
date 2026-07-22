@@ -1,4 +1,5 @@
 const COUNTRY_KEY = 'pc_country'
+const MODE_KEY = 'pc_mode'
 const MUTE_KEY = 'pc_mute'
 const DEVICE_KEY = 'pc_device_id'
 
@@ -13,6 +14,16 @@ export function getStoredCountry() {
 
 export function setStoredCountry(country) {
   localStorage.setItem(COUNTRY_KEY, JSON.stringify(country))
+}
+
+// Selection mode: 'country' (national team, counts on the leaderboard) or
+// 'club' (leaderboard-free "for fun"). Stored alongside the selected entity.
+export function getStoredMode() {
+  return localStorage.getItem(MODE_KEY) === 'club' ? 'club' : 'country'
+}
+
+export function setStoredMode(mode) {
+  localStorage.setItem(MODE_KEY, mode === 'club' ? 'club' : 'country')
 }
 
 // v2 §13 — anonymous device UUID, sent with win submissions (logged server-side)
