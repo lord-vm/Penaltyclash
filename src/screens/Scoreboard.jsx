@@ -1,20 +1,28 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { flagSrc } from '../data/countries.js'
+import { COUNTRIES } from '../data/countries.js'
+import { CLUBS } from '../data/clubs.js'
+import TeamBadge from '../components/TeamBadge.jsx'
 import { fetchScoreboard, backendConfigured } from '../lib/supabase.js'
 
-export default function Scoreboard({ country, onBack }) {
+export default function Scoreboard({ country, mode = 'country', onBack }) {
   const userCode = country?.code
+  // Backend rows only carry {code,name,win_count,rank} — colors for the club
+  // badge (or the flag image for a country) come from the matching static
+  // list, keyed by code.
+  const list = mode === 'club' ? CLUBS : COUNTRIES
+  const entityFor = (code) => list.find((e) => e.code === code)
 
   const [rows,    setRows]    = useState(null)  // null = first load in flight
   const [userRow, setUserRow] = useState(null)  // user's own ranked row (may be outside top 20)
   const [loading, setLoading] = useState(true)
 
   // v2 §2.5 / §12.2 — top 20 from the scoreboard edge function; manual
-  // refresh bypasses the 5s client cache (`force`).
+  // refresh bypasses the 5s client cache (`force`). `kind` selects which of
+  // the two separate leaderboards (country/club) to show.
   const load = useCallback(async (force = false) => {
     setLoading(true)
-    const data = await fetchScoreboard(userCode, { force })
+    const data = await fetchScoreboard(userCode, { force, kind: mode })
     if (data) {
       setRows(data.top ?? [])
       setUserRow(data.neighbors?.find(r => r.code === userCode) ?? null)
@@ -22,7 +30,7 @@ export default function Scoreboard({ country, onBack }) {
       setRows(prev => prev ?? [])
     }
     setLoading(false)
-  }, [userCode])
+  }, [userCode, mode])
 
   useEffect(() => { load() }, [load])
 
@@ -79,8 +87,8 @@ export default function Scoreboard({ country, onBack }) {
                 {row.rank <= 3 ? ['🥇','🥈','🥉'][row.rank-1] : `#${row.rank}`}
               </span>
 
-              {/* Flag */}
-              <img src={flagSrc(row.code)} alt={row.name} className="w-8 h-auto rounded-sm shrink-0" />
+              {/* Crest */}
+              <TeamBadge entity={entityFor(row.code)} mode={mode} size={32} />
 
               {/* Name */}
               <span
@@ -112,7 +120,7 @@ export default function Scoreboard({ country, onBack }) {
               style={{ background: `${country?.primary}22`, border: `1px solid ${country?.primary}55` }}
             >
               <span className="font-display text-lg text-white/40 w-8 text-right">#{userRow.rank}</span>
-              <img src={flagSrc(userRow.code)} alt={userRow.name} className="w-8 h-auto rounded-sm" />
+              <TeamBadge entity={entityFor(userRow.code)} mode={mode} size={32} />
               <span className="font-body text-sm font-semibold flex-1" style={{ color: country?.primary }}>
                 {userRow.name}
                 <span className="ml-2 font-normal text-[10px] opacity-60">← you</span>

@@ -1,8 +1,9 @@
 // v2 §12.2 / §13 — submit-win edge function.
-// Accepts { country_code, device_id }. Rate-limits 1 win per IP per 30s
-// (in-memory), validates the country against the table, increments win_count
+// Accepts { team_code, device_id }. Rate-limits 1 win per IP per 30s
+// (in-memory), validates the team against the table, increments win_count
 // atomically and returns the updated rank. Server is source of truth —
-// nothing from the client is trusted beyond the validated 2-letter code.
+// nothing from the client is trusted beyond the validated code. Covers both
+// countries (2-letter codes) and clubs (3-letter codes).
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const CORS = {
@@ -41,17 +42,18 @@ Deno.serve(async (req) => {
     }
   }
 
-  let body: { country_code?: unknown; device_id?: unknown }
+  let body: { team_code?: unknown; device_id?: unknown }
   try {
     body = await req.json()
   } catch {
     return json({ error: 'bad_json' }, 400)
   }
 
-  const code = typeof body.country_code === 'string'
-    ? body.country_code.trim().toUpperCase()
+  const code = typeof body.team_code === 'string'
+    ? body.team_code.trim().toUpperCase()
     : ''
-  if (!/^[A-Z]{2}$/.test(code)) return json({ error: 'invalid_country_code' }, 400)
+  // 2 letters (country) or 3 letters (club)
+  if (!/^[A-Z]{2,3}$/.test(code)) return json({ error: 'invalid_team_code' }, 400)
 
   // §13 — device id is logged but not enforced in v1
   console.log(`submit-win ip=${ip} device=${String(body.device_id ?? 'none')} code=${code}`)
@@ -65,7 +67,7 @@ Deno.serve(async (req) => {
     console.error('submit_win rpc failed:', error.message)
     return json({ error: 'db_error' }, 500)
   }
-  if (!data) return json({ error: 'unknown_country' }, 400)
+  if (!data) return json({ error: 'unknown_team' }, 400)
 
   lastSubmitByIp.set(ip, now) // only successful submissions consume the window
   return json({ code, win_count: data.win_count, rank: data.rank })

@@ -62,7 +62,6 @@ export default function Result({ outcome, score, suddenDeath, country, mode = 'c
 }
 
 function WinContent({ score, country, mode, accent }) {
-  const isClub = mode === 'club'
   return (
     <div className="flex flex-col items-center gap-4">
       {/* Sparkle ring */}
@@ -88,13 +87,10 @@ function WinContent({ score, country, mode, accent }) {
         </p>
         {country && (
           <p className="font-body text-white/60 text-sm mt-1 flex items-center justify-center gap-1.5">
-            {isClub ? 'for' : '+1 for'}
+            +1 for
             <TeamBadge entity={country} mode={mode} size={20} />
             {country.name}
           </p>
-        )}
-        {isClub && (
-          <p className="font-body text-white/35 text-xs mt-1">Club mode — not counted on the leaderboard</p>
         )}
       </div>
     </div>

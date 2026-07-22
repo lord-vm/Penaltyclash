@@ -1,6 +1,7 @@
 // Iconic football clubs — parallel to COUNTRIES (same {code,name,primary,secondary}
-// shape, plus a 5-player `lineup` from each club's prime era). Club mode is a
-// leaderboard-free "for fun" mode; codes are 3-letter and never hit the backend.
+// shape, plus a 5-player `lineup` from each club's prime era). Club wins count
+// on their own leaderboard, separate from countries; codes are 3-letter
+// (vs. countries' 2-letter) so the two never collide in the backend teams table.
 export const CLUBS = [
   {
     code: 'BAR', name: 'Barcelona', primary: '#A50044', secondary: '#004D98',

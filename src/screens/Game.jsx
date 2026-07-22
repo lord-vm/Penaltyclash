@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { flagSrc } from '../data/countries.js'
+import { COUNTRIES } from '../data/countries.js'
+import { CLUBS } from '../data/clubs.js'
 import TeamBadge from '../components/TeamBadge.jsx'
 import Pitch from '../components/Pitch.jsx'
 import KeeperFigure from '../components/KeeperFigure.jsx'
@@ -108,12 +109,11 @@ export default function Game({ country, mode = 'country', onResult, onHome }) {
   // v2 §2.3 — neighbor panel refreshes between shots OR every 5 seconds,
   // whichever is later: the effect re-runs after each shot and an interval
   // covers idle time; fetchScoreboard's 5s client cache enforces the "later".
+  // Works in both modes now — countries and clubs each have their own board.
   useEffect(() => {
-    // Neighbor panel is nation-only — skip it entirely in club mode.
-    if (mode !== 'country') return
     let live = true
     const load = () => {
-      fetchScoreboard(country?.code).then(data => {
+      fetchScoreboard(country?.code, { kind: mode }).then(data => {
         if (live && data?.neighbors) setNeighbors(data.neighbors)
       })
     }
@@ -1141,10 +1141,10 @@ export default function Game({ country, mode = 'country', onResult, onHome }) {
       {neighborRows.length > 0 && (
         <>
           <div className="absolute right-2 top-1/3 z-20 hidden sm:flex flex-col gap-1 pointer-events-none">
-            <NeighborPanel rows={neighborRows} accent={accent} country={country} />
+            <NeighborPanel rows={neighborRows} accent={accent} country={country} mode={mode} />
           </div>
           <div className="absolute bottom-0 left-0 right-0 z-20 sm:hidden px-2 pb-2 pointer-events-none">
-            <NeighborPanel rows={neighborRows} accent={accent} country={country} horizontal />
+            <NeighborPanel rows={neighborRows} accent={accent} country={country} mode={mode} horizontal />
           </div>
         </>
       )}
@@ -1224,14 +1224,21 @@ function ShotPips({ total, done, accent }) {
   )
 }
 
-function NeighborPanel({ rows, accent, country, horizontal }) {
+// Backend rows only carry {code,name,win_count,rank} — look up the matching
+// static entity (for a club's colors, or just to confirm a country code) by
+// code from the list for the current mode.
+function neighborEntityFor(code, mode) {
+  return (mode === 'club' ? CLUBS : COUNTRIES).find(e => e.code === code)
+}
+
+function NeighborPanel({ rows, accent, country, mode, horizontal }) {
   if (horizontal) return (
     <div className="flex justify-center gap-3 bg-black/40 backdrop-blur-sm rounded-xl px-3 py-2">
       {rows.map(r => (
         <div key={r.rank} className="flex items-center gap-1"
           style={{ color: r.isUser ? accent : 'rgba(255,255,255,0.7)' }}>
           <span className="font-body text-xs opacity-60">#{r.rank}</span>
-          <img src={flagSrc(r.code)} alt={r.name} className="w-5 h-auto rounded-sm" />
+          <TeamBadge entity={neighborEntityFor(r.code, mode)} mode={mode} size={20} />
           <span className="font-body text-xs font-semibold">{r.name}</span>
           <span className="font-display text-sm">{r.score.toLocaleString()}</span>
           {r.isUser && <span className="font-body text-[9px] opacity-60">← you</span>}
@@ -1245,7 +1252,7 @@ function NeighborPanel({ rows, accent, country, horizontal }) {
         <div key={r.rank} className="flex items-center gap-1.5"
           style={{ color: r.isUser ? accent : 'rgba(255,255,255,0.75)' }}>
           <span className="font-body text-[10px] opacity-60 w-6 text-right">#{r.rank}</span>
-          <img src={flagSrc(r.code)} alt={r.name} className="w-5 h-auto rounded-sm" />
+          <TeamBadge entity={neighborEntityFor(r.code, mode)} mode={mode} size={20} />
           <span className="font-body text-xs flex-1 font-medium">{r.name}</span>
           <span className="font-display text-xs">{r.score.toLocaleString()}</span>
           {r.isUser && <span className="font-body text-[9px] opacity-50">←</span>}

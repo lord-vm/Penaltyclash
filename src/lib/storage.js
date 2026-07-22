@@ -17,8 +17,8 @@ export function setStoredCountry(country) {
   localStorage.setItem(COUNTRY_KEY, JSON.stringify(country))
 }
 
-// Selection mode: 'country' (national team, counts on the leaderboard) or
-// 'club' (leaderboard-free "for fun"). Stored alongside the selected entity.
+// Selection mode: 'country' (national team) or 'club'. Each has its own
+// leaderboard on the backend. Stored alongside the selected entity.
 export function getStoredMode() {
   return localStorage.getItem(MODE_KEY) === 'club' ? 'club' : 'country'
 }

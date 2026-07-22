@@ -1,8 +1,10 @@
 // v2 §12.2 — scoreboard edge function. No auth, 5s in-memory cache.
-// Returns the top 20 countries by win_count DESC. With ?code=XX it also
-// returns `neighbors`: the row above, the user's country, and the row below
-// (for the in-game §2.3 panel), computed from the same cached ranking so the
-// user's rank is correct even outside the top 20.
+// Returns the top 20 teams by win_count DESC, ranked WITHIN the requested
+// ?kind= ('country', the default, or 'club') — countries and clubs are
+// separate leaderboards, so a club's rank never counts against countries.
+// With ?code=XX it also returns `neighbors`: the row above, the requested
+// team, and the row below (for the in-game §2.3 panel), computed from the
+// same cached ranking so the user's rank is correct even outside the top 20.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const CORS = {
@@ -11,15 +13,35 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 }
 
-type Row = { code: string; name: string; flag: string; win_count: number; rank: number }
+type Row = { code: string; kind: string; name: string; flag: string | null; win_count: number }
+type RankedRow = Row & { rank: number }
 
 const CACHE_MS = 5_000
+// Cache holds ALL teams (both kinds), sorted by win_count desc — cheap to
+// keep unfiltered since the whole table is at most a few dozen rows; kind
+// filtering + competition ranking happen per-request against this cache.
 let cache: { at: number; rows: Row[] } | null = null
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS },
+  })
+}
+
+// Competition ranking (equal win_counts share a rank) within one kind.
+// Rows are assumed already sorted by win_count desc (true of any subset of
+// the globally-sorted cache).
+function rankWithinKind(rows: Row[], kind: string): RankedRow[] {
+  const subset = rows.filter((r) => r.kind === kind)
+  let rank = 0
+  let prev: number | null = null
+  return subset.map((r, i) => {
+    if (r.win_count !== prev) {
+      rank = i + 1
+      prev = r.win_count
+    }
+    return { ...r, rank }
   })
 }
 
@@ -34,8 +56,8 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
     const { data, error } = await supabase
-      .from('countries')
-      .select('code,name,flag,win_count')
+      .from('teams')
+      .select('code,kind,name,flag,win_count')
       .order('win_count', { ascending: false })
       .order('code', { ascending: true }) // deterministic order within ties
     if (error) {
@@ -43,28 +65,20 @@ Deno.serve(async (req) => {
       if (!cache) return json({ error: 'db_error' }, 500)
       // stale-if-error: fall through and serve the last good cache
     } else {
-      // competition ranking — equal win_counts share a rank
-      let rank = 0
-      let prev: number | null = null
-      const rows = (data ?? []).map((r, i) => {
-        if (r.win_count !== prev) {
-          rank = i + 1
-          prev = r.win_count
-        }
-        return { ...r, rank }
-      })
-      cache = { at: now, rows }
+      cache = { at: now, rows: data ?? [] }
     }
   }
 
-  const rows = cache!.rows
-  const top = rows.slice(0, 20)
+  const url  = new URL(req.url)
+  const kind = url.searchParams.get('kind') === 'club' ? 'club' : 'country'
+  const ranked = rankWithinKind(cache!.rows, kind)
+  const top = ranked.slice(0, 20)
 
-  const code = new URL(req.url).searchParams.get('code')?.trim().toUpperCase()
-  let neighbors: Row[] | null = null
+  const code = url.searchParams.get('code')?.trim().toUpperCase()
+  let neighbors: RankedRow[] | null = null
   if (code) {
-    const i = rows.findIndex((r) => r.code === code)
-    if (i !== -1) neighbors = rows.slice(Math.max(0, i - 1), Math.min(rows.length, i + 2))
+    const i = ranked.findIndex((r) => r.code === code)
+    if (i !== -1) neighbors = ranked.slice(Math.max(0, i - 1), Math.min(ranked.length, i + 2))
   }
 
   return json({ top, neighbors, cached_at: cache!.at })

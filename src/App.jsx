@@ -43,9 +43,9 @@ export default function App() {
     setScore(actualScore ?? (result === 'win' ? 4 : 2))
     setWasSuddenDeath(suddenDeath)
     setScreen('result')
-    // v2 §12.2 — a WIN posts +1 for the country. ONLY country-mode wins count on
-    // the global leaderboard; club mode is a leaderboard-free "for fun" mode.
-    if (result === 'win' && mode === 'country' && country) {
+    // v2 §12.2 — a WIN posts +1 for the team. Countries and clubs both count,
+    // on their own separate leaderboards (see submit-win / scoreboard).
+    if (result === 'win' && country) {
       submitWin(country.code, getDeviceId())
     }
   }
@@ -120,6 +120,7 @@ export default function App() {
             <Screen key="scoreboard">
               <Scoreboard
                 country={country}
+                mode={mode}
                 onBack={() => setScreen('home')}
               />
             </Screen>
