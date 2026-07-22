@@ -12,6 +12,14 @@
 export const BALL_START = { x: 195, y: 490 }
 export const SHOT_COUNT = 5
 
+// Shot-input start zone: a draw only registers if the pointer-DOWN lands
+// within START_ZONE_R of the ball at rest (stray lines near the goal no
+// longer fire). START_RING_R is the visible affordance ring; the accept
+// radius adds invisible grace so borderline thumb touches still work.
+// 45 SVG units ≈ 11.5% of screen width ≈ 86px-diameter target on a phone.
+export const START_RING_R = 30
+export const START_ZONE_R = 45
+
 // Goal frame in SVG user units
 export const GOAL = { x1: 45, x2: 345, y1: 205, y2: 305 }
 

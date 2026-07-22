@@ -25,15 +25,20 @@ export const POSTS = {
   top:   { x1: 38, y1: 202, x2: 352, y2: 212 },
 }
 
-// Extended clamp region for endpoint (Bug 4):
-// goal frame ± 20% on each side → wide misses allowed, stands disallowed
-const MARGIN_X = (GOAL.x2 - GOAL.x1) * 0.20  // 60
-const MARGIN_Y = (GOAL.y2 - GOAL.y1) * 0.20  // 22
+// Extended clamp region for endpoint.
+// Horizontal: wide margin so a clearly-wide draw lands well OUTSIDE the post
+// hitbox and sails past cleanly (a tight margin snapped the ball just past the
+// post, so its rising flight clipped the post → false post hit).
+// Vertical: TOP margin is larger than BOTTOM so an over-the-bar draw ends well
+// clear of the crossbar hitbox (BOTTOM unchanged — low shots behave as before).
+const MARGIN_X     = (GOAL.x2 - GOAL.x1) * 0.60  // 180
+const MARGIN_Y_TOP = (GOAL.y2 - GOAL.y1) * 0.40  // 40
+const MARGIN_Y_BOT = (GOAL.y2 - GOAL.y1) * 0.20  // 20
 export const CLAMP = {
-  x1: GOAL.x1 - MARGIN_X,   // −15
-  x2: GOAL.x2 + MARGIN_X,   // 405
-  y1: GOAL.y1 - MARGIN_Y,   // 173
-  y2: GOAL.y2 + MARGIN_Y,   // 327
+  x1: GOAL.x1 - MARGIN_X,      // −135
+  x2: GOAL.x2 + MARGIN_X,      //  525
+  y1: GOAL.y1 - MARGIN_Y_TOP,  //  165  (clears crossbar hitbox at 202 by 37 > BALL_R)
+  y2: GOAL.y2 + MARGIN_Y_BOT,  //  325
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -72,19 +77,26 @@ export function ballHitsKeeper(bx, by, kx, ky, kRot) {
  * Check ball against goal posts and crossbar.
  * Returns 'left' | 'right' | 'top' | null
  *
+ * `scale` is the ball's current depth-scale (1 at the boot → 0.58 at the net).
+ * The collision radius shrinks with it so the post's catch zone matches the
+ * ball as DRAWN — with the constant full radius, a ball rendered at ~7px near
+ * the goal was colliding as if it were still 12px, inflating post hits on
+ * shots passing visibly beside the post.
+ *
  * Side-post corner exclusion: a ball passing OUTSIDE a post's x-range at or
  * below the goal line should never register as a post hit (false corner graze).
  */
-export function ballHitsPost(bx, by) {
+export function ballHitsPost(bx, by, scale = 1) {
   const { left, right, top } = POSTS
+  const r = BALL_R * scale
 
   // Left post: skip if ball is clearly to the left AND at/below goal line
   const leftBlocked  = bx < left.x1  && by >= GOAL.y2
   const rightBlocked = bx > right.x2 && by >= GOAL.y2
 
-  if (!leftBlocked  && circleRect(bx, by, BALL_R, left.x1,  left.y1,  left.x2,  left.y2))  return 'left'
-  if (!rightBlocked && circleRect(bx, by, BALL_R, right.x1, right.y1, right.x2, right.y2)) return 'right'
-  if (circleRect(bx, by, BALL_R, top.x1, top.y1, top.x2, top.y2)) return 'top'
+  if (!leftBlocked  && circleRect(bx, by, r, left.x1,  left.y1,  left.x2,  left.y2))  return 'left'
+  if (!rightBlocked && circleRect(bx, by, r, right.x1, right.y1, right.x2, right.y2)) return 'right'
+  if (circleRect(bx, by, r, top.x1, top.y1, top.x2, top.y2)) return 'top'
   return null
 }
 
