@@ -7,15 +7,16 @@ export const BALL_R = 12
 const K_SCALE = 0.52
 
 // Keeper hitboxes in keeper LOCAL coordinates (before scale is applied).
-// Combined hitbox = union of body rect + outstretched-arm rect (this union
-// is what makes top-corner saves possible on a correctly-guessed dive).
-// Tuned so a correct-direction full dive covers ~40% of goal width and
-// ~70% of goal height (§6.2 / §7); a wrong-direction dive lands the keeper
-// far enough from the ball's path that the hitbox covers nothing useful.
-//   Body:  ±26 wide,  -77 to +77 tall  (torso + legs)
-//   Arms:  ±115 wide, -50 to  -4 tall  (outstretched arm band)
+// Combined hitbox = union of body rect + outstretched-arm rect.
+//   Body: ±26 wide, -77 to +77 tall — matches the torso sprite width exactly;
+//         covers torso + legs (drives center/low saves). Unchanged.
+//   Arms: ±76 wide, -50 to -4 tall — tightened to the visible glove reach
+//         (sprite glove edge is at local ±66) plus ~15% forgiveness, so saves
+//         no longer register with the ball visually inside the goal. The arm
+//         band's vertical extent lets a HIGH-positioned dive reach the top
+//         corner (see the *_HIGH keeper targets).
 const BODY_HW = 26, BODY_YMIN = -77, BODY_YMAX = 77
-const ARM_HW  = 115, ARM_YMIN = -50, ARM_YMAX = -4
+const ARM_HW  = 76, ARM_YMIN = -50, ARM_YMAX = -4
 
 // Goal posts / crossbar in SVG world coords (matching Pitch.jsx geometry)
 export const POSTS = {

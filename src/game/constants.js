@@ -17,9 +17,17 @@ export const GOAL = { x1: 45, x2: 345, y1: 205, y2: 305 }
 
 // Keeper resting position & dive targets (SVG user units; inner <g> uses scale 0.52)
 export const KEEPER_REST   = { x: 195, y: 268 }
+// Low dives (default) — dive down toward the ground.
 export const KEEPER_LEFT   = { x:  88, y: 292, r: -68 }
 export const KEEPER_RIGHT  = { x: 302, y: 292, r:  68 }
 export const KEEPER_CENTER = { x: 195, y: 260, r:   0 }
+// High dives — used when the keeper commits UP (vertical read/streak). Raised
+// ~60 toward the crossbar so the gloves reach the top corner; x pulled slightly
+// inward (a high save is more upward reach than full lateral stretch); rotation
+// eased so the arms point up-and-out into the corner.
+export const KEEPER_LEFT_HIGH   = { x: 100, y: 232, r: -50 }
+export const KEEPER_RIGHT_HIGH  = { x: 290, y: 232, r:  50 }
+export const KEEPER_CENTER_HIGH = { x: 195, y: 222, r:   0 }
 
 // Path-drawing power thresholds (screen px per second)  — §4.5
 export const SPEED_SLOW = 400
@@ -75,5 +83,6 @@ export const BELIEF_BLEND_BY_SHOT = {
 
 export const KEEPER_MISREAD_CHANCE  = 0.15  // dive opposite of belief (keepers make mistakes)
 export const KEEPER_STREAK_LENGTH   = 2     // consecutive same-direction shots that trigger streak bias
-export const KEEPER_STREAK_BOOST    = 0.20  // extra belief weight toward a streak direction
+export const KEEPER_STREAK_BOOST    = 0.20  // extra belief weight toward a streak direction (horizontal)
+export const KEEPER_VERT_STREAK_BOOST = 0.20 // extra belief toward a vertical streak (all-high / all-low)
 export const KEEPER_POST_SAVE_BOOST = 0.25  // extra belief toward the side opposite a save, next shot only

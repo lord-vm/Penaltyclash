@@ -1,6 +1,12 @@
 // Front-facing goalkeeper. Render as <g> inside an <svg>.
 // Origin is at the figure's hip-center. Height spans roughly y=-90 to y=90.
-export default function KeeperFigure() {
+// pose: 'ready'   — arms out to the sides (default; used for low/center dives)
+//       'leaping' — both arms raised up-and-out for a HIGH save. VISUAL ONLY:
+//                   gloves sit at the top of the existing arm hitbox band so
+//                   the ball is still caught exactly where the gloves are (the
+//                   hitbox in physics.js is unchanged). Only the arms/gloves
+//                   swap; every other shape is identical to 'ready'.
+export default function KeeperFigure({ pose = 'ready' }) {
   const skin   = '#D4956A'
   const hair   = '#1a1109'
   const jersey = '#F4D03F'   // bright yellow GK jersey
@@ -36,26 +42,54 @@ export default function KeeperFigure() {
       <path d="M-26,-48 C-28,-20 -26,10 -24,12 L-18,12 C-20,8 -22,-18 -20,-44 Z" fill="rgba(0,0,0,0.12)" />
       <path d="M26,-48 C28,-20 26,10 24,12 L18,12 C20,8 22,-18 20,-44 Z" fill="rgba(0,0,0,0.12)" />
 
-      {/* === SLEEVES + ARMS (slightly raised, ready stance) === */}
-      {/* Left */}
-      <path d="M-26,-44 C-34,-36 -52,-22 -56,-12 L-46,-6 C-42,-14 -26,-28 -20,-36 Z" fill={jersey} />
-      {/* Right */}
-      <path d="M26,-44 C34,-36 52,-22 56,-12 L46,-6 C42,-14 26,-28 20,-36 Z" fill={jersey} />
+      {pose === 'leaping' ? (
+        <>
+          {/* === LEAPING ARMS (both raised up-and-out for a high save) ===
+              Filled closed limbs, ~12 wide to match the ready-pose arms; the
+              wrist end lands at the (unchanged) glove centre (±46,-58). */}
+          {/* Left */}
+          <path d="M-21,-50 C-30,-55 -38,-60 -43,-63 L-49,-53 C-40,-48 -32,-44 -27,-40 Z" fill={jersey} />
+          {/* Right */}
+          <path d="M21,-50 C30,-55 38,-60 43,-63 L49,-53 C40,-48 32,-44 27,-40 Z" fill={jersey} />
 
-      {/* === GLOVES === */}
-      {/* Left glove body */}
-      <rect x="-66" y="-20" width="20" height="14" rx="5" fill={glove} />
-      <ellipse cx="-56" cy="-13" rx="12" ry="8" fill={glove} />
-      {/* Left glove finger ridges */}
-      {[-62,-57,-52,-47].map((x,i) => (
-        <rect key={i} x={x} y="-22" width="4" height="10" rx="2" fill="rgba(0,0,0,0.2)" />
-      ))}
-      {/* Right glove body */}
-      <rect x="46" y="-20" width="20" height="14" rx="5" fill={glove} />
-      <ellipse cx="56" cy="-13" rx="12" ry="8" fill={glove} />
-      {[47,52,57,62].map((x,i) => (
-        <rect key={i} x={x} y="-22" width="4" height="10" rx="2" fill="rgba(0,0,0,0.2)" />
-      ))}
+          {/* === RAISED GLOVES (fingers up) === */}
+          {/* Left */}
+          <rect x="-56" y="-66" width="20" height="14" rx="5" fill={glove} />
+          <ellipse cx="-46" cy="-58" rx="12" ry="8" fill={glove} />
+          {[-52,-48,-44,-40].map((x,i) => (
+            <rect key={i} x={x} y="-70" width="4" height="10" rx="2" fill="rgba(0,0,0,0.2)" />
+          ))}
+          {/* Right */}
+          <rect x="36" y="-66" width="20" height="14" rx="5" fill={glove} />
+          <ellipse cx="46" cy="-58" rx="12" ry="8" fill={glove} />
+          {[40,44,48,52].map((x,i) => (
+            <rect key={i} x={x} y="-70" width="4" height="10" rx="2" fill="rgba(0,0,0,0.2)" />
+          ))}
+        </>
+      ) : (
+        <>
+          {/* === SLEEVES + ARMS (slightly raised, ready stance) === */}
+          {/* Left */}
+          <path d="M-26,-44 C-34,-36 -52,-22 -56,-12 L-46,-6 C-42,-14 -26,-28 -20,-36 Z" fill={jersey} />
+          {/* Right */}
+          <path d="M26,-44 C34,-36 52,-22 56,-12 L46,-6 C42,-14 26,-28 20,-36 Z" fill={jersey} />
+
+          {/* === GLOVES === */}
+          {/* Left glove body */}
+          <rect x="-66" y="-20" width="20" height="14" rx="5" fill={glove} />
+          <ellipse cx="-56" cy="-13" rx="12" ry="8" fill={glove} />
+          {/* Left glove finger ridges */}
+          {[-62,-57,-52,-47].map((x,i) => (
+            <rect key={i} x={x} y="-22" width="4" height="10" rx="2" fill="rgba(0,0,0,0.2)" />
+          ))}
+          {/* Right glove body */}
+          <rect x="46" y="-20" width="20" height="14" rx="5" fill={glove} />
+          <ellipse cx="56" cy="-13" rx="12" ry="8" fill={glove} />
+          {[47,52,57,62].map((x,i) => (
+            <rect key={i} x={x} y="-22" width="4" height="10" rx="2" fill="rgba(0,0,0,0.2)" />
+          ))}
+        </>
+      )}
 
       {/* === NECK === */}
       <rect x="-8" y="-66" width="16" height="22" rx="5" fill={skin} />
